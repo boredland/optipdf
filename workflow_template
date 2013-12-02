@@ -10,7 +10,7 @@ cd foo1
 /usr/local/bin/parallel -v unpaper --layout double -op 2 {} ../foo2/{.}-%02d.pgm -- *.pgm
 
 #Step 4 | Text in pgm erkennen
-echo tessedit_create_hocr       T > config_file
+echo tessedit_create_hocr 1 > config_file
 /usr/local/bin/parallel -v tesseract {} {.} -l deu config_file -- *.pgm
 
 #Step 4 | In Pdf zusammenführen (hocr2pdf)
