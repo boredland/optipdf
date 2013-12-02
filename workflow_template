@@ -6,14 +6,12 @@ gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r600 -sOutputFile=./foo1/foo-%04d.pgm foo.
 #Step 2 | Seiten teilen, drehen, schwarze Ränder entfernen | Nutzt das Programm "unpaper" (http://unpaper.berlios.de/)
 ##In der Webanwendung sollte man den Benutzer die Variable "--layout" setzen lassen. "double" für doppelseitigen Input, "single" für einseitigen
 mkdir foo2
-unpaper --layout double -op 2 ./foo1/foo1-%04d.pgm ./foo2/foo2-%04d.pgm
+cd foo1
+/usr/local/bin/parallel -v unpaper --layout double -op 2 {} ../foo2/{.}-%02d.pgm -- *.pgm
 
-#Step 3 | Vorbereitung des OCR | Kovertieren der PGM-Dateien in eine mehrseitige TIF
-mkdir foo3
-convert ./foo2/*.pgm ./foo3/foo_optimized.tif
+#Step 4 | Text in pgm erkennen
+echo tessedit_create_hocr       T > config_file
+/usr/local/bin/parallel -v tesseract {} {.} -l deu config_file -- *.pgm
 
-#Step 4 | Text in mehrseitiger tif erkennen | Nutzt Cuneinform - soll etwas schneller als 
-cuneiform -l ger -t hocr ./foo3/foo.hocr ./foo3/foo.tif
+#Step 4 | In Pdf zusammenführen (hocr2pdf)
 
-
-#Step 4 | In Pdf zusammenführen (PDF-Sandwich scheint das schnellste zu sein, ToDo)
