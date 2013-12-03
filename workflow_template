@@ -8,7 +8,8 @@ cp foo.pdf foo1/foo.pdf
 cd foo1
 pdftk foo.pdf burst
 rm foo.pdf
-/usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo2/{.}.pgm {} -- *.pdf
+/usr/local/bin/parallel -v convert {} -depth 8 -quality 100 -density 270 ../foo2/{.}.pgm -- *.pdf
+##Alternative##Höhere Quali und enorme Dateigröße## /usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo2/{.}.pgm {} -- *.pdf
 cd ..
 
 #Step 2 | Seiten teilen, drehen, schwarze Ränder entfernen | Nutzt das Programm "unpaper" (http://unpaper.berlios.de/)
