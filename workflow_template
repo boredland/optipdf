@@ -1,17 +1,39 @@
-Um Scan-Tailor nicht zu benutzen habe ich folgenden Vorschlag (noch ungetestet).
+#Um Scan-Tailor nicht zu benutzen habe ich folgenden Vorschlag.
 
 #Step 1 | Vorbereitung | Convertiert mit Ghostscript zu hochauflösenden PGM
-gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r600 -sOutputFile=./foo1/foo-%04d.pgm foo.pdf
+mkdir foo1
+mkdir foo2
+mkdir foo3
+cp foo.pdf foo1/foo.pdf
+cd foo1
+pdftk foo.pdf burst
+rm foo.pdf
+/usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo2/{.}.pgm {} -- *.pdf
+cd ..
 
 #Step 2 | Seiten teilen, drehen, schwarze Ränder entfernen | Nutzt das Programm "unpaper" (http://unpaper.berlios.de/)
 ##In der Webanwendung sollte man den Benutzer die Variable "--layout" setzen lassen. "double" für doppelseitigen Input, "single" für einseitigen
-mkdir foo2
-cd foo1
-/usr/local/bin/parallel -v unpaper --layout double -op 2 {} ../foo2/{.}-%02d.pgm -- *.pgm
+rm -r foo1
+cd foo2
+/usr/local/bin/parallel -v unpaper --layout double -op 2 {} ../foo3/{.}-%02d.pgm -- *.pgm
+cd ..
+rm -r foo2
 
 #Step 4 | Text in pgm erkennen
-echo tessedit_create_hocr 1 > config_file
-/usr/local/bin/parallel -v tesseract {} {.} -l deu config_file -- *.pgm
+cd foo3
+/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.pgm
 
-#Step 4 | In Pdf zusammenführen (hocr2pdf)
+#Step 4 | Komprimieren und in einzelne Pdfs zusammenführen
+/usr/local/bin/parallel -v jbig2 -s -S -p -v -O {.}.png {} -- *.pgm
+/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
 
+{##Step 4.1 | #hocrbash | Inhalt der hocrbash
+#!/bin/bash
+echo $1 $2
+hocr2pdf -i "$1" -o "$2".pdf -r 600 < "$2".html}
+
+##Step 5 | Zusammenfügen
+pdftk *.pdf output ../foo_opti.pdf
+cd ..
+##Step 5.3 | Datenmüll entfernen
+rm -r foo2
