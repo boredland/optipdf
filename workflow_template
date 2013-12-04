@@ -37,8 +37,10 @@ rm *.pgm output*
 echo $1 $2
 hocr2pdf -i "$1" -o "$2".pdf -r 270 < "$2".hocr}
 
+rm -r *files *.png *.hocr
+
 ##Step 6 | Zusammenfügen
 pdftk *.pdf output ../foo_opti.pdf
 cd ..
 ##Step 7 | Datenmüll entfernen
-rm -r foo2
+rm -r foo3
