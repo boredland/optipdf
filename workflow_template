@@ -20,21 +20,24 @@ cd foo2
 cd ..
 rm -r foo2
 
-#Step 4 | Text in pgm erkennen
+#Step 4 | Komprimieren
 cd foo3
-/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.pgm
-
-#Step 4 | Komprimieren und in einzelne Pdfs zusammenführen
 /usr/local/bin/parallel -v jbig2 -s -S -p -v -O {.}.png {} -- *.pgm
+rm *.pgm output*
+
+#Step 5 | Text in png erkennen
+/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.png
+
+#Step 5 | und in einzelne Pdfs zusammenführen
 /usr/local/bin/parallel -v hocrbash {} {.} -- *.png
 
-{##Step 4.1 | #hocrbash | Inhalt der hocrbash
+{##Step 5.1 | #hocrbash | Inhalt der hocrbash
 #!/bin/bash
 echo $1 $2
 hocr2pdf -i "$1" -o "$2".pdf -r 600 < "$2".html}
 
-##Step 5 | Zusammenfügen
+##Step 6 | Zusammenfügen
 pdftk *.pdf output ../foo_opti.pdf
 cd ..
-##Step 5.3 | Datenmüll entfernen
+##Step 7 | Datenmüll entfernen
 rm -r foo2
