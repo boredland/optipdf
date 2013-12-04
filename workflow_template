@@ -18,19 +18,23 @@ cd foo2
 cd ..
 rm -r foo2
 
-#Step 4 | Komprimieren
+#Step 4 | Komprimieren (verlustfrei)
 cd foo3
 /usr/local/bin/parallel -v jbig2 -s -S -p -v -O {.}.png {} -- *.pgm
 rm *.pgm output*
 
 #Step 5 | Text in png erkennen
-#a mit tesseract
-##/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.png
-#b mit cuneiform
-/usr/local/bin/parallel -v cuneiform -l ger -f hocr -o {.}.hocr {} -- *.png
+###a mit tesseract
+###/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.png
+###b mit cuneiform
+###/usr/local/bin/parallel -v cuneiform -l ger -f hocr -o {.}.hocr {} -- *.png
+#pdfocr - tesseract
 
-#Step 5 | und in einzelne Pdfs zusammenführen
-/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
+
+--- muell ---
+
+###Step (alt )5 | und in einzelne Pdfs zusammenführen
+##/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
 
 {##Step 5.1 | #hocrbash | Inhalt der hocrbash
 #!/bin/bash
