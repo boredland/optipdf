@@ -1,9 +1,7 @@
 #Um Scan-Tailor nicht zu benutzen habe ich folgenden Vorschlag.
 
 #Step 1 | Vorbereitung | Convertiert mit Ghostscript zu hochauflösenden PGM
-mkdir foo1
-mkdir foo2
-mkdir foo3
+mkdir foo1 foo2 foo3
 cp foo.pdf foo1/foo.pdf
 cd foo1
 pdftk foo.pdf burst
