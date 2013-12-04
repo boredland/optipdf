@@ -6,8 +6,8 @@ cp foo.pdf foo1/foo.pdf
 cd foo1
 pdftk foo.pdf burst
 rm foo.pdf
-/usr/local/bin/parallel -v convert {} -depth 8 -quality 100 -density 270 ../foo2/{.}.pgm -- *.pdf
-##Alternative##Höhere Quali und enorme Dateigröße## /usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo2/{.}.pgm {} -- *.pdf
+##old##/usr/local/bin/parallel -v convert {} -depth 8 -quality 100 -density 270 ../foo2/{.}.pgm -- *.pdf
+/usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo2/{.}.pgm {} -- *.pdf
 cd ..
 
 #Step 2 | Seiten teilen, drehen, schwarze Ränder entfernen | Nutzt das Programm "unpaper" (http://unpaper.berlios.de/)
@@ -24,7 +24,10 @@ cd foo3
 rm *.pgm output*
 
 #Step 5 | Text in png erkennen
-/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.png
+#a mit tesseract
+##/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.png
+#b mit cuneiform
+/usr/local/bin/parallel -v cuneiform -l ger -f hocr -o {.}.hocr {} -- *.png
 
 #Step 5 | und in einzelne Pdfs zusammenführen
 /usr/local/bin/parallel -v hocrbash {} {.} -- *.png
@@ -32,7 +35,7 @@ rm *.pgm output*
 {##Step 5.1 | #hocrbash | Inhalt der hocrbash
 #!/bin/bash
 echo $1 $2
-hocr2pdf -i "$1" -o "$2".pdf -r 600 < "$2".html}
+hocr2pdf -i "$1" -o "$2".pdf -r 270 < "$2".hocr}
 
 ##Step 6 | Zusammenfügen
 pdftk *.pdf output ../foo_opti.pdf
