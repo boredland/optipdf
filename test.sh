@@ -1,27 +1,78 @@
 #!/bin/bash
-#extract basename of pdf in $name
-name=`basename "$1" .pdf`
-echo "$name"
-echo $1;
-mkdir ."$name"_tmp
-gs -sDEVICE=tiffg4 -r600x600 -dNOPAUSE -dBATCH -dSAFER -sOutputFile=."$name"_tmp/"$name"-%04d.tif $1
-cd ."$name"_tmp
-mkdir ."$name"_tmp2
-mv *.tif ."$name"_tmp2/
-scantailor-cli -v --enable-page-detection --content-detection=aggressive --normalize-illumination --dewarping=auto ."$name"_tmp2/*.tif .
-rm -r ."$name"_tmp2 
-rm -r cache
-for f in *.tif
-do 
-tempname=`basename "$f" .tif`
-tesseract "$f" "$tempname" -l deu hocr
-done
-for f in *tif
-do
-tempname=`basename "$f" .tif`
-hocr2pdf -i "$f" -o "$name"_optimized.pdf < "$tempname".html
-done
-convert -compress JBIG2 -density 100 "$name"_optimized.pdf "$name"_optimized.pdf
+## Erstmal ein paar Variablen
+file=$(basename "$1" .pdf)
+echo "$file"
+read -p "Geben sie bitte die Textsprache ein (deu/fra/eng):" lang
+read -p "Wieviele Seiten befinden sich auf einer gescannten Seite (1/2)?" pages
+if [ "$pages" == 1 ]
+        then
+                layout=single
+        else
+                layout=double
+fi
+
+## Jetzt ein paar tempaere Ordner
+mkdir "$file"_tmp
+cp "$file".pdf "$file"_tmp/"$file".pdf
+cd "$file"_tmp
+mkdir "$file"_s1 "$file"_s2 "$file"_s3 "$file"_s4
+mv "$file".pdf "$file"_s1/"$file".pdf
+cd "$file"_s1
+
+## Das PDF in einzelteile zerlegen
+pdftk "$file".pdf burst
+rm "$file".pdf
+
+##PDFs in PGMs kovertieren ###
+/usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../"$file"_s2/{.}.pgm {} -- *.pdf
 cd ..
-rm -r ."$name"_tmp
+rm -r "$file"_s1
+cd "$file"_s2
+
+## Unpaper! ###
+/usr/local/bin/parallel -v unpaper --layout "$layout" -op "$pages" {} ../"$file"_s3/{.}%02d.pgm -- *.pgm
+
+cd ..
+rm -r "$file"_s2
+
+# Komprimieren (verlustfrei) #
+cd "$file"_s3
+/usr/local/bin/parallel -v convert {} ../"$file"_s4/{.}.jpg -- *.pgm
+cd ..
+rm -r "$file"_s3
+cd "$file"_s4
+/usr/local/bin/parallel -v jbig2 -v -b J -d -p -s -2 -O {.}.png {} -- *.jpg
+rm *.jpg
+
+# OCR und Einzelpdf
+/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
+
+# Ausgabe
+cd "$file"_s2
+
+## Unpaper! ###
+## eine Seite -> eine Seite ###
+/usr/local/bin/parallel -v unpaper --layout "$layout" -op "$pages" {} ../"$file"_s3/{.}%02d.pgm -- *.pgm
+
+cd ..
+rm -r "$file"_s2
+
+# Step 3 und 4 | Komprimieren (verlustfrei) #
+cd "$file"_s3
+/usr/local/bin/parallel -v convert {} ../"$file"_s4/{.}.jpg -- *.pgm
+cd ..
+rm -r "$file"_s3
+cd "$file"_s4
+/usr/local/bin/parallel -v jbig2 -v -b J -d -p -s -2 -O {.}.png {} -- *.jpg
+rm *.jpg
+
+# Step 5 | OCR und Einzelpdf
+/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
+
+# Ausgabe
+pdftk *.pdf output ../../"$file"_opti.pdf
+cd ..
+cd ..
+rm -r "$file"_tmp
+
 exit
