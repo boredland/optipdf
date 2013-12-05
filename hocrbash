@@ -1,0 +1,6 @@
+#!/bin/bash
+echo $1 $2
+tesseract "$1" "$2"  -l deu -psm 1 hocr
+echo "Text in $1 erkannt"
+hocr2pdf -s -r 270 -i "$1" -o "$2".pdf < "$2".html
+echo "Pdf fuer $2 erstellt"
