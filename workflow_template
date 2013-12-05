@@ -1,50 +1,53 @@
-#Um Scan-Tailor nicht zu benutzen habe ich folgenden Vorschlag.
-
-#Step 1 | Vorbereitung | Convertiert mit Ghostscript zu hochauflösenden PGM
-mkdir foo1 foo2 foo3
-cp foo.pdf foo1/foo.pdf
-cd foo1
+# Step 1 | Vorbereitung #
+##1.1# Temporäre Ordner erstellen und Pdf splitten ###
+mkdir foo_tmp
+cp foo.pdf foo_tmp/foo.pdf
+cd foo_tmp
+mkdir foo_s1 foo_s2 foo_s3 foo_s4
+mv foo.pdf foo_s1/foo.pdf
+cd foo_s1
 pdftk foo.pdf burst
 rm foo.pdf
-##old##/usr/local/bin/parallel -v convert {} -depth 8 -quality 100 -density 270 ../foo2/{.}.pgm -- *.pdf
-/usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo2/{.}.pgm {} -- *.pdf
+
+# Step 2 | Seiten teilen, drehen, schwarze Ränder entfernen | "unpaper" (http://unpaper.berlios.de/) #
+##2.1# PDFs in PGMs kovertieren ###
+/usr/local/bin/parallel -v gs -sDEVICE=pgmraw -dNOPAUSE -dBATCH -r270 -sOutputFile=../foo_s2/{.}.pgm {} -- *.pdf
 cd ..
+rm -r foo_s1
+cd foo_s2
 
-#Step 2 | Seiten teilen, drehen, schwarze Ränder entfernen | Nutzt das Programm "unpaper" (http://unpaper.berlios.de/)
-##In der Webanwendung sollte man den Benutzer die Variable "--layout" setzen lassen. "double" für doppelseitigen Input, "single" für einseitigen
-rm -r foo1
-cd foo2
-/usr/local/bin/parallel -v unpaper --layout double -op 2 {} ../foo3/{.}-%02d.pgm -- *.pgm
+##2.2# Unpaper! ###
+##a# eine Seite -> eine Seite ###
+/usr/local/bin/parallel -v unpaper --layout single -op 1 {} ../foo_s3/{.}.pgm -- *.pgm
+##b# zwei Seiten -> eine Seite ###
+/usr/local/bin/parallel -v unpaper --layout double -op 2 {} ../foo_s3/{.}.pgm -- *.pgm
+
 cd ..
-rm -r foo2
+rm -r foo_s2
 
-#Step 4 | Komprimieren (verlustfrei)
-cd foo3
-/usr/local/bin/parallel -v jbig2 -s -S -p -v -O {.}.png {} -- *.pgm
-rm *.pgm output*
+# Step 3 und 4 | Komprimieren (verlustfrei) #
+cd foo_s3
+/usr/local/bin/parallel -v convert {} ../foo_s4/{.}.jpg -- *.pgm
+cd ..
+rm -r foo_s3
+cd foo_s4
+/usr/local/bin/parallel -v jbig2 -v -b J -d -p -s -2 -O {.}.png {} -- *.jpg
+rm *.jpg
 
-#Step 5 | Text in png erkennen
-###a mit tesseract
-###/usr/local/bin/parallel -v tesseract {} {.} -l deu hocr -- *.png
-###b mit cuneiform
-###/usr/local/bin/parallel -v cuneiform -l ger -f hocr -o {.}.hocr {} -- *.png
-#pdfocr - tesseract
+# Step 5 | OCR und Einzelpdf
+/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
 
-
---- muell ---
-
-###Step (alt )5 | und in einzelne Pdfs zusammenführen
-##/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
-
-{##Step 5.1 | #hocrbash | Inhalt der hocrbash
+##5.1# hocrbash
 #!/bin/bash
 echo $1 $2
-hocr2pdf -i "$1" -o "$2".pdf -r 270 < "$2".hocr}
+tesseract "$1" "$2"  -l deu -psm 1 hocr
+echo "Text in $1 erkannt"
+hocr2pdf -s -r 270 -i "$1" -o "$2".pdf < "$2".html
+echo "Pdf fuer $2 erstellt"
+##
 
-rm -r *files *.png *.hocr
-
-##Step 6 | Zusammenfügen
-pdftk *.pdf output ../foo_opti.pdf
+# Ausgabe
+pdftk *.pdf output ../../foo_opti.pdf
 cd ..
-##Step 7 | Datenmüll entfernen
-rm -r foo3
+cd ..
+rm -r foo_tmp
