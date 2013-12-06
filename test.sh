@@ -68,9 +68,10 @@ rm *.jpg
 
 # Step 5 | OCR und Einzelpdf
 /usr/local/bin/parallel -v hocrbash {} {.} -- *.png
-
+# Einzelzeite auf a5 skalieren
+/usr/local/bin/parallel -v gs -sDEVICE=pdfwrite -sPAPERSIZE=a5 -r600 -dCompatibilityLevel=1.3 -dEmbedAllFonts=true -dSubsetFonts=true -dMonoImageDownsampleType=/Bicubic -dNOPAUSE -dBATCH -sOutputFile={.}-compressed.pdf {} -- *.pdf
 # Ausgabe
-pdftk *.pdf output ../../"$file"_opti.pdf
+pdftk *-compressed.pdf output ../../"$file"_opti.pdf
 cd ..
 cd ..
 rm -r "$file"_tmp
