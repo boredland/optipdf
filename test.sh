@@ -13,7 +13,7 @@ fi
 
 ## Jetzt ein paar tempaere Ordner
 mkdir "$file"_tmp
-cp "$file".pdf "$file"_tmp/"$file".pdf
+mv "$file".pdf "$file"_tmp/"$file".pdf
 cd "$file"_tmp
 mkdir "$file"_s1 "$file"_s2 "$file"_s3 "$file"_s4
 mv "$file".pdf "$file"_s1/"$file".pdf
@@ -68,7 +68,7 @@ rm *.jpg
 
 # Step 5 | OCR und Einzelpdf
 /usr/local/bin/parallel -v hocrbash {} {.} -- *.png
-# Einzelzeite auf a5 skalieren
+# Einzelzeite auf a5 skalieren (repaperize)
 /usr/local/bin/parallel -v gs -sDEVICE=pdfwrite -sPAPERSIZE=a5 -r600 -dCompatibilityLevel=1.3 -dEmbedAllFonts=true -dSubsetFonts=true -dMonoImageDownsampleType=/Bicubic -dNOPAUSE -dBATCH -sOutputFile={.}-compressed.pdf {} -- *.pdf
 # Ausgabe
 pdftk *-compressed.pdf output ../../"$file"_opti.pdf
