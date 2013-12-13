@@ -47,27 +47,6 @@ rm *.jpg
 # OCR und Einzelpdf
 /usr/local/bin/parallel -v hocrbash {} {.} -- *.png
 
-# Ausgabe
-cd "$file"_s2
-
-## Unpaper! ###
-## eine Seite -> eine Seite ###
-/usr/local/bin/parallel -v unpaper --layout "$layout" -op "$pages" {} ../"$file"_s3/{.}%02d.pgm -- *.pgm
-
-cd ..
-rm -r "$file"_s2
-
-# Step 3 und 4 | Komprimieren (verlustfrei) #
-cd "$file"_s3
-/usr/local/bin/parallel -v convert {} ../"$file"_s4/{.}.jpg -- *.pgm
-cd ..
-rm -r "$file"_s3
-cd "$file"_s4
-/usr/local/bin/parallel -v jbig2 -v -b J -d -p -s -2 -O {.}.png {} -- *.jpg
-rm *.jpg
-
-# Step 5 | OCR und Einzelpdf
-/usr/local/bin/parallel -v hocrbash {} {.} -- *.png
 # Einzelzeite auf a5 skalieren (repaperize)
 /usr/local/bin/parallel -v gs -sDEVICE=pdfwrite -sPAPERSIZE=a5 -r600 -dCompatibilityLevel=1.3 -dEmbedAllFonts=true -dSubsetFonts=true -dMonoImageDownsampleType=/Bicubic -dNOPAUSE -dBATCH -sOutputFile={.}-compressed.pdf {} -- *.pdf
 # Ausgabe
